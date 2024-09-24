@@ -63,6 +63,13 @@ namespace UntReplay
             Console.WriteLine("Adding zombie listeners..");
             /* Zombies */
 
+            Console.WriteLine("Adding vehicle listeners..");
+            /* Vehicles */
+            SDG.Unturned.VehicleManager.onEnterVehicleRequested += OEV;
+            SDG.Unturned.VehicleManager.onExitVehicleRequested += OExV;
+            VehicleManager.onSwapSeatRequested += OSSR;
+            SDG.Unturned.VehicleManager.onDamageTireRequested += ODT;
+            SDG.Unturned.VehicleManager.OnVehicleExploded += OVE;
         }
 
         public void shutdown()
@@ -139,5 +146,11 @@ namespace UntReplay
         {
 
         }
+        // Vehicles
+        void OSSR(Player player, InteractableVehicle vehicle, ref bool shouldAllow, byte fromSeatIndex, ref byte toSeatIndex) { } // Swap seat
+        void OEV(Player player, InteractableVehicle vehicle, ref bool shouldAllow) { } // Enter veh
+        void OExV(Player player, InteractableVehicle vehicle, ref bool shouldAllow, ref Vector3 pendingLocation, ref float pendingYaw) { } // Exit veh
+        void ODT(CSteamID instigatorSteamID, InteractableVehicle vehicle, int tireIndex, ref bool shouldAllow, EDamageOrigin damageOrigin) { }
+        void OVE(InteractableVehicle Veh) { }
     }
 }
