@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\downloads\Harmony.2.2.2.0\net472\0Harmony.dll</HintPath>
+    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\SteamLibrary\steamapps\common\Unturned\Unturned_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -60,8 +63,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="Patches\UntPatchEvent.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UntVehComp.cs" />
     <Compile Include="UntPlayerComp.cs" />
+    <Compile Include="UntVehEvents.cs" />
+    <Compile Include="UntVehFeature.cs" />
     <Compile Include="UntPlayerFeature.cs" />
     <Compile Include="UntPlayerEvents.cs" />
   </ItemGroup>

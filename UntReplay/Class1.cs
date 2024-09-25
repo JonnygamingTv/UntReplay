@@ -29,20 +29,24 @@ namespace UntReplay
         public void initialize()
         {
             Console.WriteLine("Unturned ReplayMod starting..\nBrought to you by JonHosting.com!");
-            StartRec();
+            Console.WriteLine("Adding level listeners..");
+            /* Listen on level load to reset data, basically. */
+            SDG.Unturned.Level.onPostLevelLoaded += OLL; // 1
+            SDG.Unturned.Level.onLevelExited += OLE; // 2
+
+            System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
+            customCulture.NumberFormat.NumberDecimalSeparator = ".";
+            System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
         }
 
         public void shutdown()
         {
             Console.WriteLine("Unturned ReplayMod exiting..");
+            StopRec();
         }
 
         void StartRec() // Would be cool to move this to a in-game button somewhere... Like a start recording / stop recording button.
         {
-            Console.WriteLine("Adding level listeners..");
-            /* Listen on level load to reset data, basically. */
-            SDG.Unturned.Level.onPostLevelLoaded += OLL; // 1
-            SDG.Unturned.Level.onLevelExited += OLE; // 2
             Console.WriteLine("Adding barricade listeners..");
             /* Barricades */
             // Add when placed
@@ -89,11 +93,18 @@ namespace UntReplay
 
             Console.WriteLine("Adding vehicle listeners..");
             /* Vehicles */
-            SDG.Unturned.VehicleManager.onEnterVehicleRequested += OEV; // 20
-            SDG.Unturned.VehicleManager.onExitVehicleRequested += OExV; // 21
-            VehicleManager.onSwapSeatRequested += OSSR; // 22
-            SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 23
-            SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 24
+            // Created
+            Patches.UntPatchEvent.OnVehicleSpawned += OVS; // 20
+            Patches.UntPatchEvent.OnVehicleSpawnedFromSpawnpoint += OVS; // 21
+            // Interactivity
+            SDG.Unturned.VehicleManager.onEnterVehicleRequested += OEV; // 22
+            SDG.Unturned.VehicleManager.onExitVehicleRequested += OExV; // 23
+            // Movement
+            VehicleManager.onSwapSeatRequested += OSSR; // 24
+            Patches.UntPatchEvent.OnVehicleMovementChanged += OVMC; // 25
+            // Destroyed
+            SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 26
+            SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 27
             
             System.IO.Directory.CreateDirectory(UnturnedPaths.RootDirectory.FullName + "/UntReplay");
             RecId = 0;
@@ -160,18 +171,26 @@ namespace UntReplay
 
             Console.WriteLine("Removing vehicle listeners..");
             /* Vehicles */
+            // Created
+            Patches.UntPatchEvent.OnVehicleSpawned -= OVS;
+            Patches.UntPatchEvent.OnVehicleSpawnedFromSpawnpoint -= OVS;
+            // Interactivity
             SDG.Unturned.VehicleManager.onEnterVehicleRequested -= OEV;
             SDG.Unturned.VehicleManager.onExitVehicleRequested -= OExV;
+            // Movement
             VehicleManager.onSwapSeatRequested -= OSSR;
+            Patches.UntPatchEvent.OnVehicleMovementChanged -= OVMC;
+            // Destroyed
             SDG.Unturned.VehicleManager.onDamageTireRequested -= ODT;
             SDG.Unturned.VehicleManager.OnVehicleExploded -= OVE;
+
         }
 
         // Level handlers
         void OLL(int level) {
             StartRec();
             foreach (InteractableVehicle Ve in SDG.Unturned.VehicleManager.vehicles)
-                AddLog("01" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString()+'|'+Ve.asset.GUID+'|'+Ve.transform.position.x+','+Ve.transform.position.y+','+Ve.transform.position.z+','+Ve.transform.rotation.w+','+Ve.transform.rotation.x+','+Ve.transform.rotation.y+','+Ve.transform.rotation.z+'|'+Ve.tires.ToArray().ToString());
+                AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString()+'|'+Ve.asset.GUID+'|'+Ve.transform.position.x+','+Ve.transform.position.y+','+Ve.transform.position.z+','+Ve.transform.rotation.w+','+Ve.transform.rotation.x+','+Ve.transform.rotation.y+','+Ve.transform.rotation.z+'|'+Ve.tires.ToArray().ToString());
         }
         void OLE() {
             StopRec();
@@ -244,7 +263,7 @@ namespace UntReplay
         // Player handlers
         void OPC(SteamPlayer player) // Create
         {
-            AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.stance + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance);
+            AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance.stance);
             player.player.gameObject.AddComponent<UntPlayerFeature>();
             player.player.gameObject.AddComponent<UntPlayerEvents>();
         } // 13
@@ -274,32 +293,44 @@ namespace UntReplay
             AddLog("17" + DateTime.Now.Ticks + '|' +a.player.GetInstanceID()+"|"+b);
         } // 17
         // Vehicles
+        void OVS(InteractableVehicle Ve)
+        {
+            AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
+        } // 20
+        void OVS(VehicleSpawnpoint vehicleSpawnpoint, InteractableVehicle Ve)
+        {
+            AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
+        } // 20
+        void OVMC(InteractableVehicle Ve, Vector3 lastPosition)
+        {
+            AddLog("25" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z);
+        } // 25
         void OEV(Player player, InteractableVehicle vehicle, ref bool shouldAllow) // Enter veh
         {
             if(vehicle.tryAddPlayer(out byte seat, player))
-                AddLog("20" + DateTime.Now.Ticks + '|' +vehicle.instanceID+'|'+player.GetInstanceID()+'|'+seat);
-        } // 20
+                AddLog("22" + DateTime.Now.Ticks + '|' +vehicle.instanceID+'|'+player.GetInstanceID()+'|'+seat);
+        } // 22
         void OExV(Player player, InteractableVehicle vehicle, ref bool shouldAllow, ref Vector3 pendingLocation, ref float pendingYaw) // Exit veh
         {
             if (shouldAllow)
             {
-                AddLog("21" + DateTime.Now.Ticks + '|' + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + pendingLocation.x + ',' + pendingLocation.y + ',' + pendingLocation.z + ',' + pendingYaw);
+                AddLog("23" + DateTime.Now.Ticks + '|' + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + pendingLocation.x + ',' + pendingLocation.y + ',' + pendingLocation.z + ',' + pendingYaw);
             }
-        } // 21
+        } // 23
         void OSSR(Player player, InteractableVehicle vehicle, ref bool shouldAllow, byte fromSeatIndex, ref byte toSeatIndex) // Swap seat
         {
-            AddLog("22" + DateTime.Now.Ticks + '|' + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + toSeatIndex);
-        } // 22
+            AddLog("24" + DateTime.Now.Ticks + '|' + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + toSeatIndex);
+        } // 24
         void ODT(CSteamID instigatorSteamID, InteractableVehicle vehicle, int tireIndex, ref bool shouldAllow, EDamageOrigin damageOrigin) // tire damage
         {
             if(shouldAllow)
             {
-                AddLog("23" + DateTime.Now.Ticks + '|' +vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin);
+                AddLog("26" + DateTime.Now.Ticks + '|' +vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin);
             }
-        } // 23
+        } // 26
         void OVE(InteractableVehicle Veh) // Vehicle explode (destroyed)
         {
-            AddLog("24" + DateTime.Now.Ticks + '|' + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
-        } // 24
+            AddLog("27" + DateTime.Now.Ticks + '|' + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
+        } // 27
     }
 }

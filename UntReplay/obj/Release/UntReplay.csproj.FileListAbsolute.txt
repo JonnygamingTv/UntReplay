@@ -68,3 +68,5 @@ D:\repos\UntReplay\UntReplay\obj\Release\UntReplay.csproj.CoreCompileInputs.cach
 D:\repos\UntReplay\UntReplay\obj\Release\UntReplay.csproj.CopyComplete
 D:\repos\UntReplay\UntReplay\obj\Release\UntReplay.dll
 D:\repos\UntReplay\UntReplay\obj\Release\UntReplay.pdb
+D:\repos\UntReplay\UntReplay\bin\Release\0Harmony.dll
+D:\repos\UntReplay\UntReplay\bin\Release\0Harmony.xml
