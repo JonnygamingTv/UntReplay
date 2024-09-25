@@ -90,20 +90,26 @@ namespace UntReplay
         // Barricade/structure spawns
         void oBS(SDG.Unturned.BarricadeRegion region, SDG.Unturned.BarricadeDrop drop)
         {
-            Logs.Add("03"+drop.instanceID+"|"+drop.asset.GUID+"|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z);
+            Logs.Add("03"+drop.instanceID+"|"+drop.asset.GUID+"|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID());
         }
         void oSS(SDG.Unturned.StructureRegion region, SDG.Unturned.StructureDrop drop)
         {
-            Logs.Add("04"+drop.instanceID+"|"+drop.asset.GUID+"|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z);
+            Logs.Add("04"+drop.instanceID+"|"+drop.asset.GUID+"|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID());
         }
         // Deploy handlers, basically spawn handlers
         void ODBS(SDG.Unturned.Barricade barricade, ItemBarricadeAsset asset, Transform hit, ref Vector3 point, ref float angle_x, ref float angle_y, ref float angle_z, ref ulong owner, ref ulong group, ref bool shouldAllow)
         {
-            
+            if (BarricadeManager.tryGetRegion(asset.barricade.transform, out byte x, out byte y, out ushort plant, out BarricadeRegion region))
+            {
+                Logs.Add("03" + region.drops.Count + "|" + asset.GUID + "|" + asset.barricade.transform.position.x + "," + asset.barricade.transform.position.y + "," + asset.barricade.transform.position.z + "," + asset.barricade.transform.rotation.w + "," + asset.barricade.transform.rotation.x + "," + asset.barricade.transform.rotation.y + "," + asset.barricade.transform.rotation.z + "|" + asset.barricade.transform.parent?.GetInstanceID());
+            }
         } // 4
         void ODSS(Structure structure, ItemStructureAsset asset, ref Vector3 point, ref float angle_x, ref float angle_y, ref float angle_z, ref ulong owner, ref ulong group, ref bool shouldAllow)
         {
-
+            if(StructureManager.tryGetRegion(asset.structure.transform, out byte x, out byte y, out StructureRegion region))
+            {
+                Logs.Add("04" + region.drops.Count + "|" + asset.GUID + "|" + asset.structure.transform.position.x + "," + asset.structure.transform.position.y + "," + asset.structure.transform.position.z + "," + asset.structure.transform.rotation.w + "," + asset.structure.transform.rotation.x + "," + asset.structure.transform.rotation.y + "," + asset.structure.transform.rotation.z + "|"+ asset.structure.transform.parent?.GetInstanceID());
+            }
         } // 9
         // Move handlers
         void oTR(CSteamID instigator, byte x, byte y, ushort plant, uint instanceID, ref Vector3 point, ref byte angle_x, ref byte angle_y, ref byte angle_z, ref bool shouldAllow) // Barricade
@@ -125,48 +131,69 @@ namespace UntReplay
         void oSR(SDG.Unturned.BarricadeDrop structure, SDG.Unturned.SteamPlayer instigatorClient, ref bool shouldAllow)
         {
 
-        }
+        } // 7
         void oSR(SDG.Unturned.StructureDrop structure, SDG.Unturned.SteamPlayer instigatorClient, ref bool shouldAllow)
         {
 
-        }
+        } // 12
         // Damage handlers
         void oDBR(CSteamID instigatorSteamID, Transform barricadeTransform, ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
         {
 
-        }
+        } // 6
         void oDSR(CSteamID instigatorSteamID, Transform structureTransform, ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
         {
 
-        }
+        } // 11
         // Player handlers
         void oPC(Player player) // Create
         {
-
-        }
+            Logs.Add("13" + player.GetInstanceID() + "|" + player.stance + "|" + player.transform.position.x + "," + player.transform.position.y + "," + player.transform.position.z + "," + player.transform.rotation.x + "," + player.transform.rotation.w + "|" + player.stance);
+        } // 13
 
         void oPD(PlayerLife sender, EDeathCause cause, ELimb limb, CSteamID instigator) // Death
         {
-        }
-        void POGC(PlayerAnimator a, EPlayerGesture b)
+            Logs.Add("17" + sender.GetInstanceID() + "|" + instigator + "|" + cause + "|" + limb);
+        } // 17
+        void POGC(PlayerAnimator a, EPlayerGesture b) // Gesture
         {
-
-        }
-        void POSC(PlayerStance a)
+            Logs.Add("14" + a.player.GetInstanceID() + "|" + b);
+        } // 14
+        void POSC(PlayerStance a) // Stance
         {
-
-        }
-        void POP(PlayerEquipment a, EPlayerPunch b)
+            Logs.Add("15"+a.player.GetInstanceID()+"|"+a.stance);
+        } // 15
+        void POP(PlayerEquipment a, EPlayerPunch b) // Punch
         {
-
-        }
+            Logs.Add("16"+a.player.GetInstanceID()+"|"+b);
+        } // 16
         // Vehicles
-        void OSSR(Player player, InteractableVehicle vehicle, ref bool shouldAllow, byte fromSeatIndex, ref byte toSeatIndex) { } // Swap seat
-        void OEV(Player player, InteractableVehicle vehicle, ref bool shouldAllow) {
-            Logs.Add("18"+vehicle.instanceID+'|');
-        } // Enter veh
-        void OExV(Player player, InteractableVehicle vehicle, ref bool shouldAllow, ref Vector3 pendingLocation, ref float pendingYaw) { } // Exit veh
-        void ODT(CSteamID instigatorSteamID, InteractableVehicle vehicle, int tireIndex, ref bool shouldAllow, EDamageOrigin damageOrigin) { }
-        void OVE(InteractableVehicle Veh) { }
+        void OSSR(Player player, InteractableVehicle vehicle, ref bool shouldAllow, byte fromSeatIndex, ref byte toSeatIndex) // Swap seat
+        {
+            Logs.Add("20" + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + toSeatIndex);
+        } // 20
+        void OEV(Player player, InteractableVehicle vehicle, ref bool shouldAllow) // Enter veh
+        {
+            if(vehicle.tryAddPlayer(out byte seat, player))
+                Logs.Add("18"+vehicle.instanceID+'|'+player.GetInstanceID()+'|'+seat);
+        } // 18
+        void OExV(Player player, InteractableVehicle vehicle, ref bool shouldAllow, ref Vector3 pendingLocation, ref float pendingYaw) // Exit veh
+        {
+            if (shouldAllow)
+            {
+                Logs.Add("19" + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + pendingLocation.x + ',' + pendingLocation.y + ',' + pendingLocation.z + ',' + pendingYaw);
+            }
+        } // 19
+        void ODT(CSteamID instigatorSteamID, InteractableVehicle vehicle, int tireIndex, ref bool shouldAllow, EDamageOrigin damageOrigin) // tire damage
+        {
+            if(shouldAllow)
+            {
+                Logs.Add("21"+vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin);
+            }
+        } // 21
+        void OVE(InteractableVehicle Veh) // Vehicle explode (destroyed)
+        {
+            Logs.Add("22" + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
+        } // 22
     }
 }
