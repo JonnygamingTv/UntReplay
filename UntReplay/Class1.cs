@@ -42,6 +42,10 @@ namespace UntReplay
         public void shutdown()
         {
             Console.WriteLine("Unturned ReplayMod exiting..");
+            Console.WriteLine("Removing level listeners..");
+            /* Listen on level */
+            SDG.Unturned.Level.onPostLevelLoaded -= OLL;
+            SDG.Unturned.Level.onLevelExited -= OLE;
             StopRec();
         }
 
@@ -121,10 +125,6 @@ namespace UntReplay
         {
             SaveStream?.Close();
             // System.IO.File.WriteAllLines(UnturnedPaths.RootDirectory.FullName + "/UntReplay"+RecId+".log", Logs);
-            Console.WriteLine("Removing level listeners..");
-            /* Listen on level */
-            SDG.Unturned.Level.onPostLevelLoaded -= OLL;
-            SDG.Unturned.Level.onLevelExited -= OLE;
             Console.WriteLine("Removing barricade listeners..");
             /* Barricades */
             // Add when placed
