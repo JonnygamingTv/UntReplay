@@ -191,6 +191,8 @@ namespace UntReplay
             StartRec();
             foreach (InteractableVehicle Ve in SDG.Unturned.VehicleManager.vehicles)
                 AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString()+'|'+Ve.asset.GUID+'|'+Ve.transform.position.x+','+Ve.transform.position.y+','+Ve.transform.position.z+','+Ve.transform.rotation.w+','+Ve.transform.rotation.x+','+Ve.transform.rotation.y+','+Ve.transform.rotation.z+'|'+Ve.tires.ToArray().ToString());
+            foreach (SteamPlayer player in SDG.Unturned.Provider.clients)
+                AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance.stance);
         }
         void OLE() {
             StopRec();
