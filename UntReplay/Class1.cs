@@ -83,9 +83,10 @@ namespace UntReplay
             // SDG.Unturned.PlayerClothing.OnBackpackChanged_Global
 
             // Keep track of death
-            SDG.Unturned.PlayerLife.onPlayerDied += oPD; // 18
+            SDG.Unturned.PlayerLife.onPlayerLifeUpdated += PLU; // 18
+            SDG.Unturned.PlayerLife.onPlayerDied += oPD; // 19
             // Remove on leave
-            SDG.Unturned.Provider.onEnemyDisconnected += OPDC; // 19
+            SDG.Unturned.Provider.onEnemyDisconnected += OPDC; // 20
 
             Console.WriteLine("Adding Animal listeners..");
             /* Animals */
@@ -98,17 +99,17 @@ namespace UntReplay
             Console.WriteLine("Adding vehicle listeners..");
             /* Vehicles */
             // Created
-            Patches.UntPatchEvent.OnVehicleSpawned += OVS; // 20
-            Patches.UntPatchEvent.OnVehicleSpawnedFromSpawnpoint += OVS; // 21
+            Patches.UntPatchEvent.OnVehicleSpawned += OVS; // 71
+            Patches.UntPatchEvent.OnVehicleSpawnedFromSpawnpoint += OVS; // 72
             // Interactivity
-            SDG.Unturned.VehicleManager.onEnterVehicleRequested += OEV; // 22
-            SDG.Unturned.VehicleManager.onExitVehicleRequested += OExV; // 23
+            SDG.Unturned.VehicleManager.onEnterVehicleRequested += OEV; // 73
+            SDG.Unturned.VehicleManager.onExitVehicleRequested += OExV; // 74
             // Movement
-            VehicleManager.onSwapSeatRequested += OSSR; // 24
-            Patches.UntPatchEvent.OnVehicleMovementChanged += OVMC; // 25
+            VehicleManager.onSwapSeatRequested += OSSR; // 75
+            Patches.UntPatchEvent.OnVehicleMovementChanged += OVMC; // 76
             // Destroyed
-            SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 26
-            SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 27
+            SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 77
+            SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 78
             
             System.IO.Directory.CreateDirectory(UnturnedPaths.RootDirectory.FullName + "/UntReplay");
             RecId = 0;
@@ -157,6 +158,7 @@ namespace UntReplay
             // SDG.Unturned.PlayerClothing.OnBackpackChanged_Global
 
             // Keep track of death
+            SDG.Unturned.PlayerLife.onPlayerLifeUpdated -= PLU;
             SDG.Unturned.PlayerLife.onPlayerDied -= oPD;
             // Remove on leave
             SDG.Unturned.Provider.onEnemyDisconnected -= OPDC;
@@ -192,7 +194,14 @@ namespace UntReplay
             foreach (InteractableVehicle Ve in SDG.Unturned.VehicleManager.vehicles)
                 AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString()+'|'+Ve.asset.GUID+'|'+Ve.transform.position.x+','+Ve.transform.position.y+','+Ve.transform.position.z+','+Ve.transform.rotation.w+','+Ve.transform.rotation.x+','+Ve.transform.rotation.y+','+Ve.transform.rotation.z+'|'+Ve.tires.ToArray().ToString());
             foreach (SteamPlayer player in SDG.Unturned.Provider.clients)
+            {
                 AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance.stance);
+                if (player.player.gameObject.GetComponent<UntPlayerFeature>() == null)
+                {
+                    player.player.gameObject.AddComponent<UntPlayerFeature>();
+                    player.player.gameObject.AddComponent<UntPlayerEvents>();
+                }
+            }
         }
         void OLE() {
             StopRec();
@@ -266,18 +275,26 @@ namespace UntReplay
         void OPC(SteamPlayer player) // Create
         {
             AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance.stance);
-            player.player.gameObject.AddComponent<UntPlayerFeature>();
-            player.player.gameObject.AddComponent<UntPlayerEvents>();
+            if (player.player.gameObject.GetComponent<UntPlayerFeature>() == null)
+            {
+                player.player.gameObject.AddComponent<UntPlayerFeature>();
+                player.player.gameObject.AddComponent<UntPlayerEvents>();
+            }
         } // 13
         void OPDC(SteamPlayer player) // Disconnected
         {
-            AddLog("19" + DateTime.Now.Ticks + '|' +player?.player?.GetInstanceID());
-        } // 19
+            AddLog("20" + DateTime.Now.Ticks + '|' +player?.player?.GetInstanceID());
+        } // 20
+        void PLU(Player player)
+        {
+            if(player.life.IsAlive)
+                AddLog("18" + DateTime.Now.Ticks + '|' + player.GetInstanceID() + "|" + player.life.health);
+        } // 18
 
         void oPD(PlayerLife sender, EDeathCause cause, ELimb limb, CSteamID instigator) // Death
         {
-            AddLog("18" + DateTime.Now.Ticks + '|' + sender.GetInstanceID() + "|" + instigator + "|" + cause + "|" + limb);
-        } // 18
+            AddLog("19" + DateTime.Now.Ticks + '|' + sender.GetInstanceID() + "|" + instigator + "|" + cause + "|" + limb);
+        } // 19
         void OPUP(Player player, Vector3 position) // on player move or rotate (look)
         {
             AddLog("14" + DateTime.Now.Ticks + '|' + player.GetInstanceID() + "|" + position.x + "," + position.y + "," + position.z + "," + player.transform.rotation.x + "," + player.transform.rotation.w);
@@ -297,42 +314,42 @@ namespace UntReplay
         // Vehicles
         void OVS(InteractableVehicle Ve)
         {
-            AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
-        } // 20
+            AddLog("71" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
+        } // 71
         void OVS(VehicleSpawnpoint vehicleSpawnpoint, InteractableVehicle Ve)
         {
-            AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
-        } // 20
+            AddLog("72" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
+        } // 72
         void OVMC(InteractableVehicle Ve, Vector3 lastPosition)
         {
-            AddLog("25" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z);
-        } // 25
+            AddLog("76" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z);
+        } // 76
         void OEV(Player player, InteractableVehicle vehicle, ref bool shouldAllow) // Enter veh
         {
             if(vehicle.tryAddPlayer(out byte seat, player))
-                AddLog("22" + DateTime.Now.Ticks + '|' +vehicle.instanceID+'|'+player.GetInstanceID()+'|'+seat);
-        } // 22
+                AddLog("73" + DateTime.Now.Ticks + '|' +vehicle.instanceID+'|'+player.GetInstanceID()+'|'+seat);
+        } // 73
         void OExV(Player player, InteractableVehicle vehicle, ref bool shouldAllow, ref Vector3 pendingLocation, ref float pendingYaw) // Exit veh
         {
             if (shouldAllow)
             {
-                AddLog("23" + DateTime.Now.Ticks + '|' + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + pendingLocation.x + ',' + pendingLocation.y + ',' + pendingLocation.z + ',' + pendingYaw);
+                AddLog("74" + DateTime.Now.Ticks + '|' + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + pendingLocation.x + ',' + pendingLocation.y + ',' + pendingLocation.z + ',' + pendingYaw);
             }
-        } // 23
+        } // 74
         void OSSR(Player player, InteractableVehicle vehicle, ref bool shouldAllow, byte fromSeatIndex, ref byte toSeatIndex) // Swap seat
         {
-            AddLog("24" + DateTime.Now.Ticks + '|' + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + toSeatIndex);
-        } // 24
+            AddLog("75" + DateTime.Now.Ticks + '|' + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + toSeatIndex);
+        } // 75
         void ODT(CSteamID instigatorSteamID, InteractableVehicle vehicle, int tireIndex, ref bool shouldAllow, EDamageOrigin damageOrigin) // tire damage
         {
             if(shouldAllow)
             {
-                AddLog("26" + DateTime.Now.Ticks + '|' +vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin);
+                AddLog("77" + DateTime.Now.Ticks + '|' +vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin);
             }
-        } // 26
+        } // 77
         void OVE(InteractableVehicle Veh) // Vehicle explode (destroyed)
         {
-            AddLog("27" + DateTime.Now.Ticks + '|' + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
-        } // 27
+            AddLog("78" + DateTime.Now.Ticks + '|' + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
+        } // 78
     }
 }
