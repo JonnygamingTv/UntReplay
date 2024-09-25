@@ -93,9 +93,10 @@ namespace UntReplay
             VehicleManager.onSwapSeatRequested += OSSR; // 22
             SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 23
             SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 24
-
-            RecId = 0;
+            
             System.IO.Directory.CreateDirectory(UnturnedPaths.RootDirectory.FullName + "/UntReplay");
+            RecId = 0;
+            while (System.IO.File.Exists(UnturnedPaths.RootDirectory.FullName + "/UntReplay/" + RecId + ".log") && RecId < 255) { RecId++; }
             SaveStream = System.IO.File.OpenWrite(UnturnedPaths.RootDirectory.FullName + "/UntReplay/" + RecId + ".log");
             ResetRec();
         }
