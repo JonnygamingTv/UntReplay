@@ -22,6 +22,7 @@ namespace UntReplay
         System.IO.FileStream SaveStream;
         void AddLog(string s) // make it easier to change save method
         {
+            s = s + "\n";
             SaveStream?.WriteAsync(UniEncoding.GetBytes(s), 0, UniEncoding.GetByteCount(s));
             // Logs.Add(s);
         }
