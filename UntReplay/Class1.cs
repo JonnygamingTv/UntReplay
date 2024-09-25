@@ -62,7 +62,7 @@ namespace UntReplay
             // Keep track of death
             SDG.Unturned.PlayerLife.onPlayerDied += oPD; // 17
             // Remove on leave
-            
+            SDG.Unturned.Provider.onEnemyDisconnected += OPDC; // 18
 
             Console.WriteLine("Adding Animal listeners..");
             /* Animals */
@@ -74,11 +74,11 @@ namespace UntReplay
 
             Console.WriteLine("Adding vehicle listeners..");
             /* Vehicles */
-            SDG.Unturned.VehicleManager.onEnterVehicleRequested += OEV; // 18
-            SDG.Unturned.VehicleManager.onExitVehicleRequested += OExV; // 19
-            VehicleManager.onSwapSeatRequested += OSSR; // 20
-            SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 21
-            SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 22
+            SDG.Unturned.VehicleManager.onEnterVehicleRequested += OEV; // 19
+            SDG.Unturned.VehicleManager.onExitVehicleRequested += OExV; // 20
+            VehicleManager.onSwapSeatRequested += OSSR; // 21
+            SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 22
+            SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 23
         }
 
         public void shutdown()
@@ -164,6 +164,10 @@ namespace UntReplay
         {
             AddLog("13" + player.GetInstanceID() + "|" + player.stance + "|" + player.transform.position.x + "," + player.transform.position.y + "," + player.transform.position.z + "," + player.transform.rotation.x + "," + player.transform.rotation.w + "|" + player.stance);
         } // 13
+        void OPDC(SteamPlayer player) // Disconnected
+        {
+            AddLog("18"+player?.player?.GetInstanceID());
+        } // 18
 
         void oPD(PlayerLife sender, EDeathCause cause, ELimb limb, CSteamID instigator) // Death
         {
@@ -184,30 +188,30 @@ namespace UntReplay
         // Vehicles
         void OSSR(Player player, InteractableVehicle vehicle, ref bool shouldAllow, byte fromSeatIndex, ref byte toSeatIndex) // Swap seat
         {
-            AddLog("20" + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + toSeatIndex);
-        } // 20
+            AddLog("21" + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + toSeatIndex);
+        } // 21
         void OEV(Player player, InteractableVehicle vehicle, ref bool shouldAllow) // Enter veh
         {
             if(vehicle.tryAddPlayer(out byte seat, player))
-                AddLog("18"+vehicle.instanceID+'|'+player.GetInstanceID()+'|'+seat);
-        } // 18
+                AddLog("19"+vehicle.instanceID+'|'+player.GetInstanceID()+'|'+seat);
+        } // 19
         void OExV(Player player, InteractableVehicle vehicle, ref bool shouldAllow, ref Vector3 pendingLocation, ref float pendingYaw) // Exit veh
         {
             if (shouldAllow)
             {
-                AddLog("19" + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + pendingLocation.x + ',' + pendingLocation.y + ',' + pendingLocation.z + ',' + pendingYaw);
+                AddLog("20" + vehicle.instanceID + '|' + player.GetInstanceID() + '|' + pendingLocation.x + ',' + pendingLocation.y + ',' + pendingLocation.z + ',' + pendingYaw);
             }
-        } // 19
+        } // 20
         void ODT(CSteamID instigatorSteamID, InteractableVehicle vehicle, int tireIndex, ref bool shouldAllow, EDamageOrigin damageOrigin) // tire damage
         {
             if(shouldAllow)
             {
-                AddLog("21"+vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin);
+                AddLog("22"+vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin);
             }
-        } // 21
+        } // 22
         void OVE(InteractableVehicle Veh) // Vehicle explode (destroyed)
         {
-            AddLog("22" + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
-        } // 22
+            AddLog("23" + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
+        } // 23
     }
 }
