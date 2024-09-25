@@ -202,6 +202,18 @@ namespace UntReplay
                     player.player.gameObject.AddComponent<UntPlayerEvents>();
                 }
             }
+            foreach(BarricadeRegion reg in BarricadeManager.regions)
+            {
+                foreach(BarricadeDrop drop in reg.drops) {
+                    AddLog("03" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID + "|" + drop.asset.barricade.transform.position.x + "," + drop.asset.barricade.transform.position.y + "," + drop.asset.barricade.transform.position.z + "," + drop.asset.barricade.transform.rotation.w + "," + drop.asset.barricade.transform.rotation.x + "," + drop.asset.barricade.transform.rotation.y + "," + drop.asset.barricade.transform.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID());
+                }
+            }
+            foreach(StructureRegion reg in StructureManager.regions)
+            {
+                foreach (StructureDrop drop in reg.drops) {
+                    AddLog("04" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID + "|" + drop.asset.structure.transform.position.x + "," + drop.asset.structure.transform.position.y + "," + drop.asset.structure.transform.position.z + "," + drop.asset.structure.transform.rotation.w + "," + drop.asset.structure.transform.rotation.x + "," + drop.asset.structure.transform.rotation.y + "," + drop.asset.structure.transform.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID());
+                }
+            }
         }
         void OLE() {
             StopRec();
