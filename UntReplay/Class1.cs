@@ -111,7 +111,12 @@ namespace UntReplay
             // Destroyed
             SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 77
             SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 78
-            
+
+            /* Items */
+            ItemManager.onItemDropAdded += IteSpawn; // 91
+            ItemManager.onItemDropRemoved += IteDespawn; // 92
+
+            /* Setup for save */
             System.IO.Directory.CreateDirectory(UnturnedPaths.RootDirectory.FullName + "/UntReplay");
             RecId = 0;
             while (System.IO.File.Exists(UnturnedPaths.RootDirectory.FullName + "/UntReplay/" + RecId + ".log") && RecId < 255) { RecId++; }
@@ -193,7 +198,7 @@ namespace UntReplay
         void OLL(int level) {
             StartRec();
             foreach (InteractableVehicle Ve in SDG.Unturned.VehicleManager.vehicles)
-                AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString()+'|'+Ve.asset.GUID+'|'+Ve.transform.position.x+','+Ve.transform.position.y+','+Ve.transform.position.z+','+Ve.transform.rotation.w+','+Ve.transform.rotation.x+','+Ve.transform.rotation.y+','+Ve.transform.rotation.z+'|'+Ve.tires.ToArray().ToString());
+                AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString()+'|'+Ve.asset.GUID.ToString()+'|'+Ve.transform.position.x+','+Ve.transform.position.y+','+Ve.transform.position.z+','+Ve.transform.rotation.w+','+Ve.transform.rotation.x+','+Ve.transform.rotation.y+','+Ve.transform.rotation.z+'|'+Ve.tires.ToArray().ToString());
             foreach (SteamPlayer player in SDG.Unturned.Provider.clients)
             {
                 AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance.stance);
@@ -206,13 +211,13 @@ namespace UntReplay
             foreach(BarricadeRegion reg in BarricadeManager.regions)
             {
                 foreach(BarricadeDrop drop in reg.drops) {
-                    AddLog("03" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID + "|" + drop.asset.barricade.transform.position.x + "," + drop.asset.barricade.transform.position.y + "," + drop.asset.barricade.transform.position.z + "," + drop.asset.barricade.transform.rotation.w + "," + drop.asset.barricade.transform.rotation.x + "," + drop.asset.barricade.transform.rotation.y + "," + drop.asset.barricade.transform.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID());
+                    AddLog("03" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID.ToString() + "|" + drop.asset.barricade.transform.position.x + "," + drop.asset.barricade.transform.position.y + "," + drop.asset.barricade.transform.position.z + "," + drop.asset.barricade.transform.rotation.w + "," + drop.asset.barricade.transform.rotation.x + "," + drop.asset.barricade.transform.rotation.y + "," + drop.asset.barricade.transform.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID());
                 }
             }
             foreach(StructureRegion reg in StructureManager.regions)
             {
                 foreach (StructureDrop drop in reg.drops) {
-                    AddLog("04" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID + "|" + drop.asset.structure.transform.position.x + "," + drop.asset.structure.transform.position.y + "," + drop.asset.structure.transform.position.z + "," + drop.asset.structure.transform.rotation.w + "," + drop.asset.structure.transform.rotation.x + "," + drop.asset.structure.transform.rotation.y + "," + drop.asset.structure.transform.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID());
+                    AddLog("04" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID.ToString() + "|" + drop.asset.structure.transform.position.x + "," + drop.asset.structure.transform.position.y + "," + drop.asset.structure.transform.position.z + "," + drop.asset.structure.transform.rotation.w + "," + drop.asset.structure.transform.rotation.x + "," + drop.asset.structure.transform.rotation.y + "," + drop.asset.structure.transform.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID());
                 }
             }
         }
@@ -223,25 +228,25 @@ namespace UntReplay
         // Barricade/structure spawns
         void oBS(SDG.Unturned.BarricadeRegion region, SDG.Unturned.BarricadeDrop drop)
         {
-            AddLog("03" + DateTime.Now.Ticks + '|'+drop.instanceID+"|"+drop.asset.GUID+"|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID());
+            AddLog("03" + DateTime.Now.Ticks + '|'+drop.instanceID+"|"+drop.asset.GUID.ToString() + "|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID());
         }
         void oSS(SDG.Unturned.StructureRegion region, SDG.Unturned.StructureDrop drop)
         {
-            AddLog("04" + DateTime.Now.Ticks + '|' +drop.instanceID+"|"+drop.asset.GUID+"|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID());
+            AddLog("04" + DateTime.Now.Ticks + '|' +drop.instanceID+"|"+drop.asset.GUID.ToString() + "|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID());
         }
         // Deploy handlers, basically spawn handlers
         void ODBS(SDG.Unturned.Barricade barricade, ItemBarricadeAsset asset, Transform hit, ref Vector3 point, ref float angle_x, ref float angle_y, ref float angle_z, ref ulong owner, ref ulong group, ref bool shouldAllow)
         {
             if (shouldAllow && BarricadeManager.tryGetRegion(asset.barricade.transform, out byte x, out byte y, out ushort plant, out BarricadeRegion region))
             {
-                AddLog("03" + DateTime.Now.Ticks + '|' + region.drops.Count + "|" + asset.GUID + "|" + asset.barricade.transform.position.x + "," + asset.barricade.transform.position.y + "," + asset.barricade.transform.position.z + "," + asset.barricade.transform.rotation.w + "," + asset.barricade.transform.rotation.x + "," + asset.barricade.transform.rotation.y + "," + asset.barricade.transform.rotation.z + "|" + asset.barricade.transform.parent?.GetInstanceID());
+                AddLog("03" + DateTime.Now.Ticks + '|' + region.drops.Count + "|" + asset.GUID.ToString() + "|" + asset.barricade.transform.position.x + "," + asset.barricade.transform.position.y + "," + asset.barricade.transform.position.z + "," + asset.barricade.transform.rotation.w + "," + asset.barricade.transform.rotation.x + "," + asset.barricade.transform.rotation.y + "," + asset.barricade.transform.rotation.z + "|" + asset.barricade.transform.parent?.GetInstanceID());
             }
         } // 4
         void ODSS(Structure structure, ItemStructureAsset asset, ref Vector3 point, ref float angle_x, ref float angle_y, ref float angle_z, ref ulong owner, ref ulong group, ref bool shouldAllow)
         {
             if(shouldAllow && StructureManager.tryGetRegion(asset.structure.transform, out byte x, out byte y, out StructureRegion region))
             {
-                AddLog("04" + DateTime.Now.Ticks + '|' + region.drops.Count + "|" + asset.GUID + "|" + asset.structure.transform.position.x + "," + asset.structure.transform.position.y + "," + asset.structure.transform.position.z + "," + asset.structure.transform.rotation.w + "," + asset.structure.transform.rotation.x + "," + asset.structure.transform.rotation.y + "," + asset.structure.transform.rotation.z + "|"+ asset.structure.transform.parent?.GetInstanceID());
+                AddLog("04" + DateTime.Now.Ticks + '|' + region.drops.Count + "|" + asset.GUID.ToString() + "|" + asset.structure.transform.position.x + "," + asset.structure.transform.position.y + "," + asset.structure.transform.position.z + "," + asset.structure.transform.rotation.w + "," + asset.structure.transform.rotation.x + "," + asset.structure.transform.rotation.y + "," + asset.structure.transform.rotation.z + "|"+ asset.structure.transform.parent?.GetInstanceID());
             }
         } // 9
         // Move handlers
@@ -249,14 +254,14 @@ namespace UntReplay
         {
             BarricadeDrop drop;
             if (shouldAllow && BarricadeManager.tryGetRegion(x, y, plant, out BarricadeRegion barricadeRegion) && (drop = barricadeRegion.drops.Find((BarricadeDrop o) => o.instanceID == instanceID)) != null) {
-                AddLog("05" + DateTime.Now.Ticks + '|' + instanceID + "|" +drop.asset.GUID + "|" + drop.model.position.x + "," + drop.model.position.y + "," + drop.model.position.z + "," + drop.model.rotation.w + "," + drop.model.rotation.x + "," + drop.model.rotation.y + "," + drop.model.rotation.z);
+                AddLog("05" + DateTime.Now.Ticks + '|' + instanceID + "|" +drop.asset.GUID.ToString() + "|" + drop.model.position.x + "," + drop.model.position.y + "," + drop.model.position.z + "," + drop.model.rotation.w + "," + drop.model.rotation.x + "," + drop.model.rotation.y + "," + drop.model.rotation.z);
             }
         } // 5
         void oTR(CSteamID instigator, byte x, byte y, uint instanceID, ref Vector3 point, ref byte angle_x, ref byte angle_y, ref byte angle_z, ref bool shouldAllow) // Structure
         {
             StructureDrop drop;
             if (shouldAllow && StructureManager.tryGetRegion(x, y, out StructureRegion structureRegion) && (drop = structureRegion.drops.Find((StructureDrop o) => o.instanceID == instanceID)) != null) {
-                AddLog("10" + DateTime.Now.Ticks + '|' + instanceID + "|" + drop.asset.GUID + "|" + drop.model.position.x + "," + drop.model.position.y + "," + drop.model.position.z + "," + drop.model.rotation.w + "," + drop.model.rotation.x + "," + drop.model.rotation.y + "," + drop.model.rotation.z);
+                AddLog("10" + DateTime.Now.Ticks + '|' + instanceID + "|" + drop.asset.GUID.ToString() + "|" + drop.model.position.x + "," + drop.model.position.y + "," + drop.model.position.z + "," + drop.model.rotation.w + "," + drop.model.rotation.x + "," + drop.model.rotation.y + "," + drop.model.rotation.z);
             }
         } // 10
 
@@ -327,11 +332,11 @@ namespace UntReplay
         // Vehicles
         void OVS(InteractableVehicle Ve)
         {
-            AddLog("71" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
+            AddLog("71" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
         } // 71
         void OVS(VehicleSpawnpoint vehicleSpawnpoint, InteractableVehicle Ve)
         {
-            AddLog("72" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
+            AddLog("72" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
         } // 72
         void OVMC(InteractableVehicle Ve, Vector3 lastPosition)
         {
@@ -372,5 +377,14 @@ namespace UntReplay
         {
             AddLog("78" + DateTime.Now.Ticks + '|' + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
         } // 78
+
+        void IteSpawn(Transform model, InteractableItem interactableItem)
+        {
+            AddLog("91" + DateTime.Now.Ticks + '|' + interactableItem.transform.position.x + ',' + interactableItem.transform.position.y + ',' + interactableItem.transform.position.z + ',' + interactableItem.transform.rotation.x + ',' + interactableItem.transform.rotation.w + '|' + interactableItem.asset.GUID.ToString().ToString());
+        } // 91
+        void IteDespawn(Transform model, InteractableItem interactableItem)
+        {
+            AddLog("92" + DateTime.Now.Ticks + '|');
+        } // 92
     }
 }
