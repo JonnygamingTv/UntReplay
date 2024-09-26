@@ -107,6 +107,7 @@ namespace UntReplay
             // Movement
             VehicleManager.onSwapSeatRequested += OSSR; // 75
             Patches.UntPatchEvent.OnVehicleMovementChanged += OVMC; // 76
+            Patches.UntPatchEvent.OnVehicleMovementChangedByPlayer += OVMC; // 76
             // Destroyed
             SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 77
             SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 78
@@ -334,8 +335,16 @@ namespace UntReplay
         } // 72
         void OVMC(InteractableVehicle Ve, Vector3 lastPosition)
         {
-            AddLog("76" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z);
+            string s = "76" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.ReplicatedSpeed;
+            for (byte i = 0; i < Ve.tires?.Length; i++) s += "|" + Ve.tires?[i]?.wheel?.rpm + "," + Ve.tires?[i]?.wheel?.steerAngle + "," + Ve.tires?[i]?.wheel?.suspensionDistance;
+            AddLog(s);
         } // 76
+        void OVMC(InteractableVehicle Ve, Player player, Vector3 lastPosition) 
+        {
+            string s = "76" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.ReplicatedSpeed;
+            for(byte i = 0; i < Ve.tires?.Length; i++) s += "|" + Ve.tires?[i]?.wheel?.rpm + "," + Ve.tires?[i]?.wheel?.steerAngle + "," + Ve.tires?[i]?.wheel?.suspensionDistance;
+            AddLog(s);
+        }
         void OEV(Player player, InteractableVehicle vehicle, ref bool shouldAllow) // Enter veh
         {
             if(vehicle.tryAddPlayer(out byte seat, player))
