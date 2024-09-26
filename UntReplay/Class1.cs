@@ -82,11 +82,13 @@ namespace UntReplay
             SDG.Unturned.PlayerEquipment.OnPunch_Global += POP; // 17
             // SDG.Unturned.PlayerClothing.OnBackpackChanged_Global
             PlayerAnimator.OnLeanChanged_Global += POLC; // 18
+            PlayerEquipment.OnUseableChanged_Global += Equip; // 19
+            PlayerEquipment.OnInspectingUseable_Global += InspectIt; // 20
             // Keep track of death
-            SDG.Unturned.PlayerLife.onPlayerLifeUpdated += PLU; // 19
-            SDG.Unturned.PlayerLife.onPlayerDied += oPD; // 20
+            SDG.Unturned.PlayerLife.onPlayerLifeUpdated += PLU; // 21
+            SDG.Unturned.PlayerLife.onPlayerDied += oPD; // 22
             // Remove on leave
-            SDG.Unturned.Provider.onEnemyDisconnected += OPDC; // 21
+            SDG.Unturned.Provider.onEnemyDisconnected += OPDC; // 23
 
             Console.WriteLine("Adding Animal listeners..");
             /* Animals */
@@ -163,6 +165,8 @@ namespace UntReplay
             SDG.Unturned.PlayerEquipment.OnPunch_Global -= POP;
             // SDG.Unturned.PlayerClothing.OnBackpackChanged_Global
             PlayerAnimator.OnLeanChanged_Global -= POLC;
+            PlayerEquipment.OnUseableChanged_Global -= Equip;
+            PlayerEquipment.OnInspectingUseable_Global -= InspectIt;
             // Keep track of death
             SDG.Unturned.PlayerLife.onPlayerLifeUpdated -= PLU;
             SDG.Unturned.PlayerLife.onPlayerDied -= oPD;
@@ -303,18 +307,18 @@ namespace UntReplay
         } // 13
         void OPDC(SteamPlayer player) // Disconnected
         {
-            AddLog("21" + DateTime.Now.Ticks + '|' +player?.player?.GetInstanceID());
-        } // 21
+            AddLog("23" + DateTime.Now.Ticks + '|' +player?.player?.GetInstanceID());
+        } // 23
         void PLU(Player player)
         {
             if(player.life.IsAlive)
-                AddLog("19" + DateTime.Now.Ticks + '|' + player.GetInstanceID() + "|" + player.life.health);
-        } // 19
+                AddLog("21" + DateTime.Now.Ticks + '|' + player.GetInstanceID() + "|" + player.life.health);
+        } // 21
 
         void oPD(PlayerLife sender, EDeathCause cause, ELimb limb, CSteamID instigator) // Death
         {
-            AddLog("20" + DateTime.Now.Ticks + '|' + sender.GetInstanceID() + "|" + instigator + "|" + cause + "|" + limb);
-        } // 20
+            AddLog("22" + DateTime.Now.Ticks + '|' + sender.GetInstanceID() + "|" + instigator + "|" + cause + "|" + limb);
+        } // 22
         void OPUP(Player player, Vector3 position) // on player move or rotate (look)
         {
             AddLog("14" + DateTime.Now.Ticks + '|' + player.GetInstanceID() + "|" + position.x + "," + position.y + "," + position.z + "," + player.transform.rotation.x + "," + player.transform.rotation.w);
@@ -331,9 +335,15 @@ namespace UntReplay
         {
             AddLog("17" + DateTime.Now.Ticks + '|' +a.player.GetInstanceID()+"|"+b);
         } // 17
-        void POLC(PlayerAnimator b) {
+        void POLC(PlayerAnimator b) { // Lean
             AddLog("18" + DateTime.Now.Ticks + '|' + b.player.GetInstanceID() + '|' + b.lean);
-        }
+        } // 18
+        void Equip(PlayerEquipment equipment) {
+            AddLog("19" + DateTime.Now.Ticks + '|' + equipment.player.GetInstanceID() + '|' + equipment.itemID);
+        } // 19
+        void InspectIt(PlayerEquipment equipment) {
+            AddLog("20" + DateTime.Now.Ticks + '|' + equipment.player.GetInstanceID() + '|' + equipment.itemID);
+        } // 20
         // Vehicles
         void OVS(InteractableVehicle Ve)
         {
