@@ -395,11 +395,11 @@ namespace UntReplay
 
         void IteSpawn(Transform model, InteractableItem interactableItem)
         {
-            AddLog("91" + DateTime.Now.Ticks + '|' + interactableItem.transform.position.x + ',' + interactableItem.transform.position.y + ',' + interactableItem.transform.position.z + ',' + interactableItem.transform.rotation.x + ',' + interactableItem.transform.rotation.w + '|' + interactableItem.asset.GUID.ToString().ToString());
+            AddLog("91" + DateTime.Now.Ticks + '|' + interactableItem.GetInstanceID() + '|' + interactableItem.transform.position.x + ',' + interactableItem.transform.position.y + ',' + interactableItem.transform.position.z + ',' + interactableItem.transform.rotation.x + ',' + interactableItem.transform.rotation.w + '|' + interactableItem.asset.GUID.ToString().ToString());
         } // 91
         void IteDespawn(Transform model, InteractableItem interactableItem)
         {
-            AddLog("92" + DateTime.Now.Ticks + '|');
+            AddLog("92" + DateTime.Now.Ticks + '|' + interactableItem.GetInstanceID());
         } // 92
     }
 }
