@@ -18,13 +18,80 @@ namespace UntReplay
         static bool InitializedHarmony;
         byte RecId;
         // List<String> Logs;
+        Dictionary<int, int> InstanceIDs = new Dictionary<int, int>();
         UnicodeEncoding UniEncoding = new UnicodeEncoding();
-        System.IO.FileStream SaveStream;
-        void AddLog(string s) // make it easier to change save method
+        public System.IO.FileStream SaveStream;
+        public System.IO.FileStream ReadStream;
+        public void AddLog(string s) // make it easier to change save method
         {
             s = s + "\n";
             SaveStream?.WriteAsync(UniEncoding.GetBytes(s), 0, UniEncoding.GetByteCount(s));
             // Logs.Add(s);
+        }
+        public void ReadLog(int pos = -1, short speed = 60)
+        {
+            if (ReadStream == null) return;
+            if(pos != -1)
+            {
+                ReadStream.Seek(pos, System.IO.SeekOrigin.Begin);
+            }
+            string log = "";
+            if (speed < 0)
+            {
+                int b;
+                while ((b = ReadStream.ReadByte()) != -1)
+                {
+                    char chara = (char) b;
+                    if (chara == '\n') break;
+                    log = chara + log;
+                    if (ReadStream.Position == 0) break;
+                    ReadStream.Seek(-2, System.IO.SeekOrigin.Current);
+                }
+            }
+            else
+            {
+                int b;
+                while((b = ReadStream.ReadByte()) != -1)
+                {
+                    char chara = (char)b;
+                    if (chara == '\n') break;
+                    log += chara;
+                }
+            }
+            if(log != "") Analyz(log);
+        }
+        public void Analyz(string line)
+        {
+            if (!byte.TryParse(line.Substring(0, 2), out byte instruct)) return;
+            string[] args = line.Substring(2).Split('|');
+            int IID1 = -1, IID2 = -1;
+            switch (instruct)
+            {
+                case 3:
+                    ItemBarricadeAsset barr = FindBarricade(args[2]);
+                    string[] val1 = args[3].Split(',');
+                    float[] val2 = new float[0];
+                    for(byte i = 0; i < val1.Length; i++) {
+                        val2[i] = float.Parse(val1[i]);
+                    }
+                    IID1 = (int)val2[7];
+                    Vector3 Pos = new Vector3(val2[0], val2[1], val2[2]);
+                    Quaternion Quat = new Quaternion(val2[4], val2[5], val2[6], val2[3]);
+                    Patches.MyTransform CustomT = new Patches.MyTransform(Pos, Quat);
+                    if (barr != null)
+                    {
+                        Barricade b = PlaceBarricade(barr, CustomT);
+                        
+                    }
+                    break;
+                default:break;
+            }
+            if(IID1 != -1 && IID2 != -1)
+                InstanceIDs[IID1] = IID2;
+        }
+        public void StartRead(byte RId = 0)
+        {
+            ReadStream = System.IO.File.OpenRead(UnturnedPaths.RootDirectory.FullName + "/UntReplay/" + RId + ".log");
         }
         public void initialize()
         {
@@ -47,6 +114,84 @@ namespace UntReplay
             SDG.Unturned.Level.onPostLevelLoaded -= OLL;
             SDG.Unturned.Level.onLevelExited -= OLE;
             StopRec();
+        }
+
+        private ItemBarricadeAsset FindBarricade(string handle)
+        {
+            if (ushort.TryParse(handle, out var itemID))
+            {
+                var ast = Assets.find(EAssetType.ITEM, itemID);
+
+                if (ast == null || !(ast is ItemBarricadeAsset bca))
+                {
+                    return null;
+                }
+                else
+                {
+                    return bca;
+                }
+            }
+            else
+            {
+                List<ItemBarricadeAsset> src = new List<ItemBarricadeAsset>();
+                Assets.find(src);
+                return (ItemBarricadeAsset)src.FirstOrDefault(x => x is ItemBarricadeAsset bca && bca.itemName != null && bca.itemName.IndexOf(handle, 0, StringComparison.InvariantCultureIgnoreCase) != -1);
+            }
+        }
+        private ItemStructureAsset FindStructure(string handle)
+        {
+            if (ushort.TryParse(handle, out var itemID))
+            {
+                var ast = Assets.find(EAssetType.ITEM, itemID);
+
+                if (ast == null || !(ast is ItemStructureAsset bca))
+                {
+                    return null;
+                }
+                else
+                {
+                    return bca;
+                }
+            }
+            else
+            {
+                List<ItemStructureAsset> src = new List<ItemStructureAsset>();
+                Assets.find(src);
+                return (ItemStructureAsset)src.FirstOrDefault(x => x is ItemStructureAsset bca && bca.itemName != null && bca.itemName.IndexOf(handle, 0, StringComparison.InvariantCultureIgnoreCase) != -1);
+            }
+        }
+        private Structure PlaceStructure(ItemStructureAsset structureAsset, Transform transform, SteamPlayer upl = null)
+        {
+            Structure struc = new Structure(structureAsset, structureAsset.health);
+            
+            if (StructureManager.dropReplicatedStructure(struc, transform.position, transform.rotation, (upl!=null?upl.playerID.steamID.m_SteamID:0), (upl!=null?upl.player.quests.groupID.m_SteamID:0)))
+                return struc;
+            else return null;
+        }
+
+        private Barricade PlaceBarricade(ItemBarricadeAsset barricadeAsset, Transform transformA = null, SteamPlayer upl = null, bool isPlant = false, Transform transformB = null)
+        {
+            var b = new Barricade(barricadeAsset);
+            
+            Transform transform = isPlant ? BarricadeManager.dropPlantedBarricade(transformA, b, transformB.position, transformB.rotation, (upl != null ? upl.playerID.steamID.m_SteamID : 0), (upl != null ? upl.player.quests.groupID.m_SteamID : 0)) : BarricadeManager.dropNonPlantedBarricade(b, transformA.position, transformA.rotation, (upl!=null?upl.playerID.steamID.m_SteamID:0), (upl!=null?upl.player.quests.groupID.m_SteamID:0));
+            if (transform == null)
+            {
+                return null;
+            }
+
+            return b;
+        }
+        private Barricade PlaceBarricade(ItemBarricadeAsset barricadeAsset, Patches.MyTransform transformA = null, SteamPlayer upl = null, bool isPlant = false)
+        {
+            var b = new Barricade(barricadeAsset);
+
+            Transform transform = BarricadeManager.dropNonPlantedBarricade(b, transformA.position, transformA.rotation, (upl != null ? upl.playerID.steamID.m_SteamID : 0), (upl != null ? upl.player.quests.groupID.m_SteamID : 0));
+            if (transform == null)
+            {
+                return null;
+            }
+
+            return b;
         }
 
         internal static void LoadHarmony()
@@ -255,23 +400,23 @@ namespace UntReplay
             }
             foreach (SteamPlayer player in SDG.Unturned.Provider.clients)
             {
-                AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance.stance);
+                AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.w + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.y + "," + player.player.transform.rotation.z + '|' + player.player.stance.stance);
                 if (player.player.gameObject.GetComponent<UntPlayerFeature>() == null)
                 {
                     player.player.gameObject.AddComponent<UntPlayerFeature>();
                     player.player.gameObject.AddComponent<UntPlayerEvents>();
                 }
             }
-            foreach(BarricadeRegion reg in BarricadeManager.regions)
+            foreach (BarricadeRegion reg in BarricadeManager.regions)
             {
                 foreach(BarricadeDrop drop in reg.drops) {
-                    AddLog("03" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID.ToString() + "|" + drop.asset.barricade.transform.position.x + "," + drop.asset.barricade.transform.position.y + "," + drop.asset.barricade.transform.position.z + "," + drop.asset.barricade.transform.rotation.w + "," + drop.asset.barricade.transform.rotation.x + "," + drop.asset.barricade.transform.rotation.y + "," + drop.asset.barricade.transform.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID());
+                    AddLog("03" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID.ToString() + "|" + drop.asset.barricade.transform.position.x + "," + drop.asset.barricade.transform.position.y + "," + drop.asset.barricade.transform.position.z + "," + drop.asset.barricade.transform.rotation.w + "," + drop.asset.barricade.transform.rotation.x + "," + drop.asset.barricade.transform.rotation.y + "," + drop.asset.barricade.transform.rotation.z + '|' + drop.asset.barricade.transform.parent?.GetInstanceID() + '|' + drop.GetServersideData().owner);
                 }
             }
-            foreach(StructureRegion reg in StructureManager.regions)
+            foreach (StructureRegion reg in StructureManager.regions)
             {
                 foreach (StructureDrop drop in reg.drops) {
-                    AddLog("04" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID.ToString() + "|" + drop.asset.structure.transform.position.x + "," + drop.asset.structure.transform.position.y + "," + drop.asset.structure.transform.position.z + "," + drop.asset.structure.transform.rotation.w + "," + drop.asset.structure.transform.rotation.x + "," + drop.asset.structure.transform.rotation.y + "," + drop.asset.structure.transform.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID());
+                    AddLog("04" + DateTime.Now.Ticks + '|' + drop.instanceID + "|" + drop.asset.GUID.ToString() + "|" + drop.asset.structure.transform.position.x + "," + drop.asset.structure.transform.position.y + "," + drop.asset.structure.transform.position.z + "," + drop.asset.structure.transform.rotation.w + "," + drop.asset.structure.transform.rotation.x + "," + drop.asset.structure.transform.rotation.y + "," + drop.asset.structure.transform.rotation.z + '|' + drop.asset.structure.transform.parent?.GetInstanceID() + '|' + drop.GetServersideData().owner);
                 }
             }
         }
@@ -282,25 +427,25 @@ namespace UntReplay
         // Barricade/structure spawns
         void oBS(SDG.Unturned.BarricadeRegion region, SDG.Unturned.BarricadeDrop drop)
         {
-            AddLog("03" + DateTime.Now.Ticks + '|'+drop.instanceID+"|"+drop.asset.GUID.ToString() + "|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID());
+            AddLog("03" + DateTime.Now.Ticks + '|'+drop.instanceID+"|"+drop.asset.GUID.ToString() + "|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.barricade.transform.parent?.GetInstanceID() + '|' + drop.GetServersideData().owner);
         }
         void oSS(SDG.Unturned.StructureRegion region, SDG.Unturned.StructureDrop drop)
         {
-            AddLog("04" + DateTime.Now.Ticks + '|' +drop.instanceID+"|"+drop.asset.GUID.ToString() + "|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID());
+            AddLog("04" + DateTime.Now.Ticks + '|' +drop.instanceID+"|"+drop.asset.GUID.ToString() + "|"+drop.model.position.x+","+drop.model.position.y+","+drop.model.position.z+","+drop.model.rotation.w+","+drop.model.rotation.x+","+drop.model.rotation.y+","+drop.model.rotation.z + "|" + drop.asset.structure.transform.parent?.GetInstanceID() + '|' + drop.GetServersideData().owner);
         }
         // Deploy handlers, basically spawn handlers
         void ODBS(SDG.Unturned.Barricade barricade, ItemBarricadeAsset asset, Transform hit, ref Vector3 point, ref float angle_x, ref float angle_y, ref float angle_z, ref ulong owner, ref ulong group, ref bool shouldAllow)
         {
             if (shouldAllow && BarricadeManager.tryGetRegion(asset.barricade.transform, out byte x, out byte y, out ushort plant, out BarricadeRegion region))
             {
-                AddLog("03" + DateTime.Now.Ticks + '|' + region.drops.Count + "|" + asset.GUID.ToString() + "|" + asset.barricade.transform.position.x + "," + asset.barricade.transform.position.y + "," + asset.barricade.transform.position.z + "," + asset.barricade.transform.rotation.w + "," + asset.barricade.transform.rotation.x + "," + asset.barricade.transform.rotation.y + "," + asset.barricade.transform.rotation.z + "|" + asset.barricade.transform.parent?.GetInstanceID());
+                AddLog("03" + DateTime.Now.Ticks + '|' + region.drops.Count + "|" + asset.GUID.ToString() + "|" + asset.barricade.transform.position.x + "," + asset.barricade.transform.position.y + "," + asset.barricade.transform.position.z + "," + asset.barricade.transform.rotation.w + "," + asset.barricade.transform.rotation.x + "," + asset.barricade.transform.rotation.y + "," + asset.barricade.transform.rotation.z + "|" + asset.barricade.transform.parent?.GetInstanceID() + '|' + owner + '|' + group);
             }
         } // 4
         void ODSS(Structure structure, ItemStructureAsset asset, ref Vector3 point, ref float angle_x, ref float angle_y, ref float angle_z, ref ulong owner, ref ulong group, ref bool shouldAllow)
         {
             if(shouldAllow && StructureManager.tryGetRegion(asset.structure.transform, out byte x, out byte y, out StructureRegion region))
             {
-                AddLog("04" + DateTime.Now.Ticks + '|' + region.drops.Count + "|" + asset.GUID.ToString() + "|" + asset.structure.transform.position.x + "," + asset.structure.transform.position.y + "," + asset.structure.transform.position.z + "," + asset.structure.transform.rotation.w + "," + asset.structure.transform.rotation.x + "," + asset.structure.transform.rotation.y + "," + asset.structure.transform.rotation.z + "|"+ asset.structure.transform.parent?.GetInstanceID());
+                AddLog("04" + DateTime.Now.Ticks + '|' + region.drops.Count + "|" + asset.GUID.ToString() + "|" + asset.structure.transform.position.x + "," + asset.structure.transform.position.y + "," + asset.structure.transform.position.z + "," + asset.structure.transform.rotation.w + "," + asset.structure.transform.rotation.x + "," + asset.structure.transform.rotation.y + "," + asset.structure.transform.rotation.z + "|"+ asset.structure.transform.parent?.GetInstanceID() + '|' + owner + '|' + group);
             }
         } // 9
         // Move handlers
@@ -346,7 +491,7 @@ namespace UntReplay
         // Player handlers
         void OPC(SteamPlayer player) // Create
         {
-            AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance.stance);
+            AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.w + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.y + "," + player.player.transform.rotation.z + "|" + player.player.stance.stance);
             if (player.player.gameObject.GetComponent<UntPlayerFeature>() == null)
             {
                 player.player.gameObject.AddComponent<UntPlayerFeature>();
@@ -369,7 +514,7 @@ namespace UntReplay
         } // 22
         void OPUP(Player player, Vector3 position) // on player move or rotate (look)
         {
-            AddLog("14" + DateTime.Now.Ticks + '|' + player.GetInstanceID() + "|" + position.x + "," + position.y + "," + position.z + "," + player.transform.rotation.x + "," + player.transform.rotation.w);
+            AddLog("14" + DateTime.Now.Ticks + '|' + player.GetInstanceID() + "|" + position.x + "," + position.y + "," + position.z + "," + player.transform.rotation.w + ',' + player.transform.rotation.x + ","+ player.transform.rotation.y + ","+ player.transform.rotation.z);
         } // 14
         void POGC(PlayerAnimator a, EPlayerGesture b) // Gesture
         {
@@ -400,12 +545,12 @@ namespace UntReplay
 
         private void OnAnimDmg(Animal animal, ushort damage, EPlayerKill kill, uint xp)
         {
-            AddLog("33" + DateTime.Now.Ticks + '|' + animal.GetInstanceID().ToString() + '|' + animal.transform.position.x + ',' + animal.transform.position.y + ',' + animal.transform.position.z + ',' + animal.transform.rotation.x + ',' + animal.transform.rotation.w + '|' + damage + '|' + xp + '|' + kill.GetHashCode());
+            AddLog("33" + DateTime.Now.Ticks + '|' + animal.GetInstanceID().ToString() + '|' + animal.transform.position.x + ',' + animal.transform.position.y + ',' + animal.transform.position.z + ',' + animal.transform.rotation.w + ',' + animal.transform.rotation.x + ',' + animal.transform.rotation.y + ',' + animal.transform.rotation.z + '|' + damage + '|' + xp + '|' + kill.GetHashCode());
         }
 
         private void OnAnimMov(Animal animal, Vector3 lastPosition)
         {
-            AddLog("32" + DateTime.Now.Ticks + '|' + animal.GetInstanceID().ToString() + '|' + animal.transform.position.x + ',' + animal.transform.position.y + ',' + animal.transform.position.z + ',' + animal.transform.rotation.x + ',' + animal.transform.rotation.w + '|' + (animal.isFleeing?'1':'0') + '|' + (animal.isHunting ? '1' : '0'));
+            AddLog("32" + DateTime.Now.Ticks + '|' + animal.GetInstanceID().ToString() + '|' + animal.transform.position.x + ',' + animal.transform.position.y + ',' + animal.transform.position.z + ',' + animal.transform.rotation.w + ',' + animal.transform.rotation.x + ',' + animal.transform.rotation.y + ',' + animal.transform.rotation.z + '|' + (animal.isFleeing?'1':'0') + '|' + (animal.isHunting ? '1' : '0'));
         }
 
         private void OnAnimSpawn(Animal animal, Vector3 position, byte angle)
@@ -457,7 +602,7 @@ namespace UntReplay
         {
             if(shouldAllow)
             {
-                AddLog("77" + DateTime.Now.Ticks + '|' +vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin);
+                AddLog("77" + DateTime.Now.Ticks + '|' +vehicle.instanceID+"|"+tireIndex+"|"+damageOrigin.GetHashCode());
             }
         } // 77
         void OVE(InteractableVehicle Veh) // Vehicle explode (destroyed)
@@ -484,11 +629,11 @@ namespace UntReplay
         }
         private void OnDoorC(InteractableDoor obj)
         {
-            AddLog("89" + DateTime.Now.Ticks + '|' + obj.GetInstanceID().ToString() + '|' + obj.transform.position.x + ',' + obj.transform.position.y + ',' + obj.transform.position.z + ',' + obj.transform.rotation.x + ',' + obj.transform.rotation.w + '|' + (obj.isOpen?'1':'0'));
+            AddLog("89" + DateTime.Now.Ticks + '|' + obj.GetInstanceID().ToString() + '|' + obj.transform.position.x + ',' + obj.transform.position.y + ',' + obj.transform.position.z + ',' + obj.transform.rotation.w + ',' + obj.transform.rotation.x + ',' + obj.transform.rotation.y + ',' + obj.transform.rotation.z + '|' + (obj.isOpen?'1':'0'));
         } // 89
         void IteSpawn(Transform model, InteractableItem interactableItem)
         {
-            AddLog("91" + DateTime.Now.Ticks + '|' + interactableItem.GetInstanceID() + '|' + interactableItem.transform.position.x + ',' + interactableItem.transform.position.y + ',' + interactableItem.transform.position.z + ',' + interactableItem.transform.rotation.x + ',' + interactableItem.transform.rotation.w + '|' + interactableItem.asset.GUID.ToString().ToString());
+            AddLog("91" + DateTime.Now.Ticks + '|' + interactableItem.GetInstanceID() + '|' + interactableItem.transform.position.x + ',' + interactableItem.transform.position.y + ',' + interactableItem.transform.position.z + ',' + interactableItem.transform.rotation.w + ',' + interactableItem.transform.rotation.x + ',' + interactableItem.transform.rotation.y + ',' + interactableItem.transform.rotation.z + '|' + interactableItem.asset.GUID.ToString().ToString());
         } // 91
         void IteDespawn(Transform model, InteractableItem interactableItem)
         {
