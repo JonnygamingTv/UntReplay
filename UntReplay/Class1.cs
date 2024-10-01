@@ -248,7 +248,11 @@ namespace UntReplay
         void OLL(int level) {
             StartRec();
             foreach (InteractableVehicle Ve in SDG.Unturned.VehicleManager.vehicles)
-                AddLog("20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString()+'|'+Ve.asset.GUID.ToString()+'|'+Ve.transform.position.x+','+Ve.transform.position.y+','+Ve.transform.position.z+','+Ve.transform.rotation.w+','+Ve.transform.rotation.x+','+Ve.transform.rotation.y+','+Ve.transform.rotation.z+'|'+Ve.tires.ToArray().ToString());
+            {
+                string s="20" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|';
+                for (byte i = 0; i < Ve.tires?.Length; i++) s += "|" + Ve.tires?[i]?.wheel?.rpm + "," + Ve.tires?[i]?.wheel?.steerAngle + "," + Ve.tires?[i]?.wheel?.suspensionDistance;
+                AddLog(s);
+            }
             foreach (SteamPlayer player in SDG.Unturned.Provider.clients)
             {
                 AddLog("13" + DateTime.Now.Ticks + '|' + player.player.GetInstanceID() + "|" + player.player.transform.position.x + "," + player.player.transform.position.y + "," + player.player.transform.position.z + "," + player.player.transform.rotation.x + "," + player.player.transform.rotation.w + "|" + player.player.stance.stance);
@@ -369,15 +373,15 @@ namespace UntReplay
         } // 14
         void POGC(PlayerAnimator a, EPlayerGesture b) // Gesture
         {
-            AddLog("15" + DateTime.Now.Ticks + '|' + a.player.GetInstanceID() + "|" + b);
+            AddLog("15" + DateTime.Now.Ticks + '|' + a.player.GetInstanceID() + "|" + b.GetHashCode());
         } // 15
         void POSC(PlayerStance a) // Stance
         {
-            AddLog("16" + DateTime.Now.Ticks + '|' +a.player.GetInstanceID()+"|"+a.stance);
+            AddLog("16" + DateTime.Now.Ticks + '|' +a.player.GetInstanceID()+"|"+a.stance.GetHashCode());
         } // 16
         void POP(PlayerEquipment a, EPlayerPunch b) // Punch
         {
-            AddLog("17" + DateTime.Now.Ticks + '|' +a.player.GetInstanceID()+"|"+b);
+            AddLog("17" + DateTime.Now.Ticks + '|' +a.player.GetInstanceID()+"|"+b.GetHashCode());
         } // 17
         void POLC(PlayerAnimator b) { // Lean
             AddLog("18" + DateTime.Now.Ticks + '|' + b.player.GetInstanceID() + '|' + b.lean);
@@ -411,11 +415,15 @@ namespace UntReplay
         // Vehicles
         void OVS(InteractableVehicle Ve)
         {
-            AddLog("71" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
+            string s="71" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|';
+            for (byte i = 0; i < Ve.tires?.Length; i++) s += "|" + Ve.tires?[i]?.wheel?.rpm + "," + Ve.tires?[i]?.wheel?.steerAngle + "," + Ve.tires?[i]?.wheel?.suspensionDistance;
+            AddLog(s);
         } // 71
         void OVS(VehicleSpawnpoint vehicleSpawnpoint, InteractableVehicle Ve)
         {
-            AddLog("72" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|' + Ve.tires.ToArray().ToString());
+            string s="72" + DateTime.Now.Ticks + '|' + Ve.instanceID.ToString() + '|' + Ve.asset.GUID.ToString() + '|' + Ve.transform.position.x + ',' + Ve.transform.position.y + ',' + Ve.transform.position.z + ',' + Ve.transform.rotation.w + ',' + Ve.transform.rotation.x + ',' + Ve.transform.rotation.y + ',' + Ve.transform.rotation.z + '|';
+            for (byte i = 0; i < Ve.tires?.Length; i++) s += "|" + Ve.tires?[i]?.wheel?.rpm + "," + Ve.tires?[i]?.wheel?.steerAngle + "," + Ve.tires?[i]?.wheel?.suspensionDistance;
+            AddLog(s);
         } // 72
         void OVMC(InteractableVehicle Ve, Vector3 lastPosition)
         {
