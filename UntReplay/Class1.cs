@@ -14,8 +14,8 @@ namespace UntReplay
     {
         // TODO:
         // Add all needed event listeners and save needed data
-        // Probably have a continous save system instead of saving on exit only (write stream)
         // Add a way to load the data so it can actually be used.
+        static bool InitializedHarmony;
         byte RecId;
         // List<String> Logs;
         UnicodeEncoding UniEncoding = new UnicodeEncoding();
@@ -49,8 +49,29 @@ namespace UntReplay
             StopRec();
         }
 
+        internal static void LoadHarmony()
+        {
+            if (InitializedHarmony) return;
+            try
+            {
+                var harmony = new HarmonyLib.Harmony("UntReplay.Patches");
+
+                var processor = new HarmonyLib.PatchClassProcessor(harmony, typeof(Patches.UntPatchEvent));
+                processor.Patch();
+
+                InitializedHarmony = true;
+            }
+            catch (Exception e)
+            {
+                var caller = new System.Diagnostics.StackTrace().GetFrame(1).GetMethod().ReflectedType.Assembly.GetName().Name;
+                Console.WriteLine($"[{caller}] [ERROR] LoadHarmony: {e.Message}");
+                Console.WriteLine($"[{caller}] [ERROR] Details: {e}");
+            }
+        }
+
         void StartRec() // Would be cool to move this to a in-game button somewhere... Like a start recording / stop recording button.
         {
+            LoadHarmony();
             Console.WriteLine("Adding barricade listeners..");
             /* Barricades */
             // Add when placed
@@ -92,8 +113,13 @@ namespace UntReplay
 
             Console.WriteLine("Adding Animal listeners..");
             /* Animals */
-
+            // Create
+            Patches.UntPatchEvent.OnAnimalSpawned += OnAnimSpawn; // 31
+            // Movement
+            Patches.UntPatchEvent.OnAnimalMovementChanged += OnAnimMov; // 32
+            Patches.UntPatchEvent.OnAnimalDamaged += OnAnimDmg; // 33
             // Keep track of death
+            Patches.UntPatchEvent.OnAnimalKilled += OnAnimkill; // 30
 
             Console.WriteLine("Adding zombie listeners..");
             /* Zombies */
@@ -114,6 +140,12 @@ namespace UntReplay
             SDG.Unturned.VehicleManager.onDamageTireRequested += ODT; // 77
             SDG.Unturned.VehicleManager.OnVehicleExploded += OVE; // 78
 
+            /* Interactables */
+            Patches.UntPatchEvent.OnPlayerInteractedDisplay += OnDispC; // 85
+            Patches.UntPatchEvent.OnPlayerInteractedFire += OnFireC; // 86
+            Patches.UntPatchEvent.OnPlayerInteractedOven += OnOvenC; // 87
+            Patches.UntPatchEvent.OnPlayerInteractedSign += OnSignC; // 88
+            InteractableDoor.OnDoorChanged_Global += OnDoorC; // 89
             /* Items */
             ItemManager.onItemDropAdded += IteSpawn; // 91
             ItemManager.onItemDropRemoved += IteDespawn; // 92
@@ -125,6 +157,7 @@ namespace UntReplay
             SaveStream = System.IO.File.OpenWrite(UnturnedPaths.RootDirectory.FullName + "/UntReplay/" + RecId + ".log");
             ResetRec();
         }
+
         void ResetRec()
         {
             SaveStream?.Seek(0, System.IO.SeekOrigin.Begin);
@@ -175,8 +208,13 @@ namespace UntReplay
 
             Console.WriteLine("Removing Animal listeners..");
             /* Animals */
-
+            // Create
+            Patches.UntPatchEvent.OnAnimalSpawned -= OnAnimSpawn;
+            // Movement
+            Patches.UntPatchEvent.OnAnimalMovementChanged -= OnAnimMov;
+            Patches.UntPatchEvent.OnAnimalDamaged -= OnAnimDmg;
             // Keep track of death
+            Patches.UntPatchEvent.OnAnimalKilled -= OnAnimkill;
 
             Console.WriteLine("Removing zombie listeners..");
             /* Zombies */
@@ -195,6 +233,12 @@ namespace UntReplay
             // Destroyed
             SDG.Unturned.VehicleManager.onDamageTireRequested -= ODT;
             SDG.Unturned.VehicleManager.OnVehicleExploded -= OVE;
+            /* Interactables */
+            Patches.UntPatchEvent.OnPlayerInteractedDisplay -= OnDispC;
+            Patches.UntPatchEvent.OnPlayerInteractedFire -= OnFireC;
+            Patches.UntPatchEvent.OnPlayerInteractedOven -= OnOvenC;
+            Patches.UntPatchEvent.OnPlayerInteractedSign -= OnSignC;
+            InteractableDoor.OnDoorChanged_Global -= OnDoorC;
             /* Items */
             ItemManager.onItemDropAdded -= IteSpawn; // 91
             ItemManager.onItemDropRemoved -= IteDespawn; // 92
@@ -344,6 +388,26 @@ namespace UntReplay
         void InspectIt(PlayerEquipment equipment) {
             AddLog("20" + DateTime.Now.Ticks + '|' + equipment.player.GetInstanceID() + '|' + equipment.itemID);
         } // 20
+          // Animals
+        private void OnAnimkill(Animal animal, ref Vector3 ragdoll, ref ERagdollEffect ragdollEffect)
+        {
+            AddLog("30" + DateTime.Now.Ticks + '|' + animal.GetInstanceID().ToString() + '|' + ragdoll.x + ',' + ragdoll.y + ',' + ragdoll.z + ',' + ragdoll.magnitude + '|' + ragdollEffect.GetHashCode());
+        }
+
+        private void OnAnimDmg(Animal animal, ushort damage, EPlayerKill kill, uint xp)
+        {
+            AddLog("33" + DateTime.Now.Ticks + '|' + animal.GetInstanceID().ToString() + '|' + animal.transform.position.x + ',' + animal.transform.position.y + ',' + animal.transform.position.z + ',' + animal.transform.rotation.x + ',' + animal.transform.rotation.w + '|' + damage + '|' + xp + '|' + kill.GetHashCode());
+        }
+
+        private void OnAnimMov(Animal animal, Vector3 lastPosition)
+        {
+            AddLog("32" + DateTime.Now.Ticks + '|' + animal.GetInstanceID().ToString() + '|' + animal.transform.position.x + ',' + animal.transform.position.y + ',' + animal.transform.position.z + ',' + animal.transform.rotation.x + ',' + animal.transform.rotation.w + '|' + (animal.isFleeing?'1':'0') + '|' + (animal.isHunting ? '1' : '0'));
+        }
+
+        private void OnAnimSpawn(Animal animal, Vector3 position, byte angle)
+        {
+            AddLog("31" + DateTime.Now.Ticks + '|' + animal.GetInstanceID().ToString() + '|' + position.x + ',' + position.y + ',' + position.z + ',' + angle + '|' + animal.id + '|' + animal.index);
+        }
         // Vehicles
         void OVS(InteractableVehicle Ve)
         {
@@ -392,7 +456,28 @@ namespace UntReplay
         {
             AddLog("78" + DateTime.Now.Ticks + '|' + Veh.instanceID + '|' + Veh.transform.position.x + ',' + Veh.transform.position.y + ',' + Veh.transform.position.z);
         } // 78
+        /* Interactables */
+        private void OnDispC(Player player, InteractableStorage display, byte rot)
+        {
+            AddLog("85" + DateTime.Now.Ticks + '|' + display.GetInstanceID().ToString() + '|' + rot + '|' + (display.isDisplay?'1':'0') + '|' + player.GetInstanceID().ToString());
+        }
+        private void OnFireC(Player player, InteractableFire fire, bool lit)
+        {
+            AddLog("86" + DateTime.Now.Ticks + '|' + fire.GetInstanceID().ToString() + '|' + (lit ? '1' : '0') + '|' + (fire.isLit ? '1' : '0') + '|' + player.GetInstanceID().ToString());
+        }
 
+        private void OnOvenC(Player player, InteractableOven oven, bool lit)
+        {
+            AddLog("87" + DateTime.Now.Ticks + '|' + oven.GetInstanceID().ToString() + '|' + (lit ? '1' : '0') + '|' + (oven.isLit ? '1' : '0') + '|' + player.GetInstanceID().ToString());
+        }
+        private void OnSignC(Player player, InteractableSign sign, string text)
+        {
+            AddLog("88" + DateTime.Now.Ticks + '|' + sign.GetInstanceID().ToString() + '|' + player?.GetInstanceID().ToString() + '|' + text);
+        }
+        private void OnDoorC(InteractableDoor obj)
+        {
+            AddLog("89" + DateTime.Now.Ticks + '|' + obj.GetInstanceID().ToString() + '|' + obj.transform.position.x + ',' + obj.transform.position.y + ',' + obj.transform.position.z + ',' + obj.transform.rotation.x + ',' + obj.transform.rotation.w + '|' + (obj.isOpen?'1':'0'));
+        } // 89
         void IteSpawn(Transform model, InteractableItem interactableItem)
         {
             AddLog("91" + DateTime.Now.Ticks + '|' + interactableItem.GetInstanceID() + '|' + interactableItem.transform.position.x + ',' + interactableItem.transform.position.y + ',' + interactableItem.transform.position.z + ',' + interactableItem.transform.rotation.x + ',' + interactableItem.transform.rotation.w + '|' + interactableItem.asset.GUID.ToString().ToString());
