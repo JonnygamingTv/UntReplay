@@ -68,22 +68,43 @@ namespace UntReplay
             switch (instruct)
             {
                 case 3:
-                    ItemBarricadeAsset barr = FindBarricade(args[2]);
-                    string[] val1 = args[3].Split(',');
-                    float[] val2 = new float[0];
-                    for(byte i = 0; i < val1.Length; i++) {
-                        val2[i] = float.Parse(val1[i]);
-                    }
-                    IID1 = (int)val2[7];
-                    Vector3 Pos = new Vector3(val2[0], val2[1], val2[2]);
-                    Quaternion Quat = new Quaternion(val2[4], val2[5], val2[6], val2[3]);
-                    Patches.MyTransform CustomT = new Patches.MyTransform(Pos, Quat);
-                    if (barr != null)
                     {
-                        Barricade b = PlaceBarricade(barr, CustomT);
-                        
+                        ItemBarricadeAsset barr = FindBarricade(args[2]);
+                        string[] val1 = args[3].Split(',');
+                        float[] val2 = new float[0];
+                        for (byte i = 0; i < val1.Length; i++)
+                        {
+                            val2[i] = float.Parse(val1[i]);
+                        }
+                        IID1 = (int)val2[7];
+                        Vector3 Pos = new Vector3(val2[0], val2[1], val2[2]);
+                        Quaternion Quat = new Quaternion(val2[4], val2[5], val2[6], val2[3]);
+                        Patches.MyTransform CustomT = new Patches.MyTransform(Pos, Quat);
+                        if (barr != null)
+                        {
+                            Barricade b = PlaceBarricade(barr, CustomT);
+
+                        }
+                        break;
                     }
-                    break;
+                case 4: {
+                        ItemStructureAsset struc = FindStructure(args[2]);
+                        string[] val1 = args[3].Split(',');
+                        float[] val2 = new float[0];
+                        for (byte i = 0; i < val1.Length; i++)
+                        {
+                            val2[i] = float.Parse(val1[i]);
+                        }
+                        IID1 = (int)val2[7];
+                        Vector3 Pos = new Vector3(val2[0], val2[1], val2[2]);
+                        Quaternion Quat = new Quaternion(val2[4], val2[5], val2[6], val2[3]);
+                        Patches.MyTransform CustomT = new Patches.MyTransform(Pos, Quat);
+                        if (struc != null)
+                        {
+                            Structure s = PlaceStructure(struc, CustomT);
+
+                        }
+                        break;}
                 default:break;
             }
             if(IID1 != -1 && IID2 != -1)
@@ -168,8 +189,16 @@ namespace UntReplay
                 return struc;
             else return null;
         }
+        private Structure PlaceStructure(ItemStructureAsset structureAsset, Patches.MyTransform transform, SteamPlayer upl = null)
+        {
+            Structure struc = new Structure(structureAsset, structureAsset.health);
 
-        private Barricade PlaceBarricade(ItemBarricadeAsset barricadeAsset, Transform transformA = null, SteamPlayer upl = null, bool isPlant = false, Transform transformB = null)
+            if (StructureManager.dropReplicatedStructure(struc, transform.position, transform.rotation, (upl != null ? upl.playerID.steamID.m_SteamID : 0), (upl != null ? upl.player.quests.groupID.m_SteamID : 0)))
+                return struc;
+            else return null;
+        }
+
+            private Barricade PlaceBarricade(ItemBarricadeAsset barricadeAsset, Transform transformA = null, SteamPlayer upl = null, bool isPlant = false, Transform transformB = null)
         {
             var b = new Barricade(barricadeAsset);
             
