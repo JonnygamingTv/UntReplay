@@ -58,9 +58,9 @@ namespace UntReplay
                     log += chara;
                 }
             }
-            if(log != "") Analyz(log);
+            if(log != "") Analyz(log, !(speed < 0));
         }
-        public void Analyz(string line)
+        public void Analyz(string line, bool Forward = true)
         {
             if (!byte.TryParse(line.Substring(0, 2), out byte instruct)) return;
             string[] args = line.Substring(2).Split('|');
@@ -76,14 +76,14 @@ namespace UntReplay
                         {
                             val2[i] = float.Parse(val1[i]);
                         }
-                        IID1 = (int)val2[7];
+                        IID1 = int.Parse(args[1]);
                         Vector3 Pos = new Vector3(val2[0], val2[1], val2[2]);
                         Quaternion Quat = new Quaternion(val2[4], val2[5], val2[6], val2[3]);
                         Patches.MyTransform CustomT = new Patches.MyTransform(Pos, Quat);
                         if (barr != null)
                         {
-                            Barricade b = PlaceBarricade(barr, CustomT);
-
+                            Transform b = PlaceBarricade(barr, CustomT);
+                            IID2 = b.GetInstanceID();
                         }
                         break;
                     }
@@ -95,16 +95,39 @@ namespace UntReplay
                         {
                             val2[i] = float.Parse(val1[i]);
                         }
-                        IID1 = (int)val2[7];
+                        IID1 = int.Parse(args[1]);
                         Vector3 Pos = new Vector3(val2[0], val2[1], val2[2]);
                         Quaternion Quat = new Quaternion(val2[4], val2[5], val2[6], val2[3]);
                         Patches.MyTransform CustomT = new Patches.MyTransform(Pos, Quat);
                         if (struc != null)
                         {
                             Structure s = PlaceStructure(struc, CustomT);
-
+                            
                         }
                         break;}
+                case 5:
+                    {
+                        IID1 = int.Parse(args[1]);
+                        if(InstanceIDs.TryGetValue(IID1, out int UseInstance))
+                        {
+                            string[] val1 = args[3].Split(',');
+                            float[] val2 = new float[0];
+                            for (byte i = 0; i < val1.Length; i++)
+                            {
+                                val2[i] = float.Parse(val1[i]);
+                            }
+                            Vector3 Point = new Vector3(val2[0], val2[1], val2[2]);
+                            Quaternion Rot = new Quaternion(val2[4], val2[5], val2[6], val2[3]);
+                            if (Regions.tryGetCoordinate(Point, out byte x, out byte y))
+                            {
+                                if (BarricadeManager.tryGetRegion(x, y, 65535, out BarricadeRegion Reg))
+                                {
+                                    BarricadeDrop b = Reg.drops.Where(drop => drop.instanceID == UseInstance).FirstOrDefault();
+                                }
+                            }
+                        }
+                        break;
+                    }
                 default:break;
             }
             if(IID1 != -1 && IID2 != -1)
@@ -210,7 +233,7 @@ namespace UntReplay
 
             return b;
         }
-        private Barricade PlaceBarricade(ItemBarricadeAsset barricadeAsset, Patches.MyTransform transformA = null, SteamPlayer upl = null, bool isPlant = false)
+        private Transform PlaceBarricade(ItemBarricadeAsset barricadeAsset, Patches.MyTransform transformA = null, SteamPlayer upl = null, bool isPlant = false)
         {
             var b = new Barricade(barricadeAsset);
 
@@ -220,7 +243,7 @@ namespace UntReplay
                 return null;
             }
 
-            return b;
+            return transform;
         }
 
         internal static void LoadHarmony()
